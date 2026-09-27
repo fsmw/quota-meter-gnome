@@ -1,8 +1,8 @@
-# GAN spec — agnome-top Codex quota MVP
+# GAN spec — Quota Meter Codex quota MVP
 
 ## Product goal
 
-An installable GNOME Shell 50+ extension for personal use that displays official Codex ChatGPT quota in the top bar and in a compact menu. This release is personal/experimental because Codex App Server is officially documented but marked experimental and unsupported for production workloads.
+An installable GNOME Shell 50+ extension for personal use that displays official Codex ChatGPT quota in the top bar and in a compact menu. This release is personal/experimental. It is an unofficial community integration over the local Codex App Server client protocol; that protocol can evolve and is not a general-purpose public REST API.
 
 ## Locked scope
 

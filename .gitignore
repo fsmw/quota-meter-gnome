@@ -9,3 +9,4 @@
 .harnesstrim/
 *.zip
 *.gschema.valid
+extension/schemas/gschemas.compiled

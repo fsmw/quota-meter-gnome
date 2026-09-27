@@ -1,10 +1,12 @@
 {
-  "name": "agnome-top",
+  "name": "quota-meter-gnome",
   "private": true,
+  "license": "GPL-2.0-or-later",
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "check": "node --check extension/extension.js && node --check extension/prefs.js && node --check extension/normalizer.js && node --check extension/jsonl.js && node --check extension/app-server-client.js && node --check extension/gio-transport.js && node --check extension/provider.js && gjs -m extension/gio-transport.js",
-    "pack": "bash scripts/pack-extension.sh"
+    "pack": "bash scripts/pack-extension.sh",
+    "dev:nested": "bash scripts/dev-nested-shell.sh"
   }
 }

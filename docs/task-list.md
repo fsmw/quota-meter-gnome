@@ -1,4 +1,4 @@
-# MVP de agnome-top — task list (Gate 1)
+# Quota Meter — task list (Gate 1)
 
 Estado: Gate 1 aprobado; scaffolding y primer corte en implementación. Fuente de alcance: [`definition.md`](definition.md). La raíz tiene Git propio; los repos anidados están excluidos y se preservan.
 
@@ -8,15 +8,15 @@ Estado: Gate 1 aprobado; scaffolding y primer corte en implementación. Fuente d
 - Fuente: `codex app-server` por stdio JSONL, protocolo `initialize`/`initialized` y RPC `account/rateLimits/read`.
 - Nunca leer `~/.codex/auth.json`, llamar `/wham/usage`, usar scraping o automatización de UI.
 - Gemini y cuota Claude fuera del MVP. Cuota oficial y uso local observado permanecen separados; uso local puede quedar para después del primer recorrido Codex.
-- GNOME Shell 50+ / GJS. App Server es experimental/no soportado para producción; no presentarlo como estable.
+- GNOME Shell 50+ / GJS. Codex App Server es una interfaz de cliente, no una API REST pública general; el protocolo tiene partes experimentales y puede evolucionar. Mantener la integración aislada y presentar Quota Meter como proyecto personal/no oficial.
 
 ## Cortes verticales
 
 ### 0. Scaffolding instalable
 
-- [x] Establecer estructura raíz, UUID provisional `agnome-top@local`, metadata con Shell 50 y 51, schema GSettings y menú de panel mínimo.
+- [x] Establecer estructura raíz, UUID `quota-meter@fsmw.github.io`, metadata con Shell 50 y 51, schema GSettings y menú de panel mínimo.
 - [x] Añadir `.gitignore` para que los repos anidados de referencia no entren en el nuevo repo raíz; inicializar Git raíz sin alterar repos anidados.
-- [x] Añadir flujo de paquete local, dependencias de Codex CLI y nota visible de versión personal/experimental.
+- [x] Añadir flujo de paquete local, dependencias de Codex CLI y nota visible de extensión comunitaria no oficial.
 - [x] **Aceptación parcial:** metadata/schema, empaquetado con módulos importados e instalación del bundle validan. Enable/disable en Shell sigue pendiente.
 
 ### 1. Recorrido E2E Codex con App Server simulado — slice de MVP
@@ -30,7 +30,7 @@ Estado: Gate 1 aprobado; scaffolding y primer corte en implementación. Fuente d
 
 ### 2. Ciclo de vida y operación segura
 
-- [x] Serializar sondeos, aplicar timeout de 8 s, refresco inicial + cada 5 min, cooldown manual de 60 s, caché stale de 30 min y backoff con jitter.
+- [x] Serializar sondeos, aplicar timeout de 8 s, refresco inicial + cada 1 min, cooldown manual de 60 s, caché stale de 30 min y backoff con jitter.
 - [x] En `disable()`: cancelar I/O, cerrar stdin, terminar proceso si no sale, esperar/recolectar, limpiar timeout y descartar callbacks/resultados tardíos.
 - [x] Limitar longitud de línea JSONL, silenciar stderr del hijo y no registrar líneas completas ni mensajes potencialmente sensibles.
 - [ ] **Aceptación:** habilitar/deshabilitar y re-habilitar en Shell sin proceso, timer, actor, señal o estado busy huérfano; fallo conserva último snapshot bueno dentro de TTL sin bloquear Shell.
@@ -40,12 +40,12 @@ Estado: Gate 1 aprobado; scaffolding y primer corte en implementación. Fuente d
 
 - [x] Resolver `codex` mediante PATH sin shell y ejecutar App Server con autenticación gestionada por la instalación existente.
 - [x] Mapear CLI ausente, sesión no autenticada, cuenta incompatible y error RPC a estados comprensibles. No inspeccionar archivos de credenciales.
-- [x] **Aceptación de datos:** consulta real verificada con dos ventanas; salida de validación limitada a estado y cantidad de métricas, sin exponer email, token, stdout/stderr o payloads. Documentar que la dependencia sigue experimental.
+- [x] **Aceptación de datos:** consulta real verificada con dos ventanas; salida de validación limitada a estado y cantidad de métricas, sin exponer email, token, stdout/stderr o payloads. Documentar que App Server es una interfaz de cliente y puede evolucionar.
 - **Validación:** sesión GNOME instalada; Codex CLI presente/autenticado y caso sin Codex o autenticación. Verificar enable/disable con `gnome-shell-test-tool` o sesión GNOME disponible.
 
 ### 4. Preferencias y primer paquete personal
 
-- [x] Preferencias mínimas: habilitar/deshabilitar Codex y elegir 5/10/15 min; actualizar ahora con cooldown; ver estado de autenticación.
+- [x] Preferencias mínimas: habilitar/deshabilitar Codex y elegir 1/5/10/15 min; actualizar ahora con cooldown; ver estado de autenticación.
 - [x] Empaquetar e instalar localmente; documentar dependencia, alcance personal/experimental y limitaciones.
 - [ ] **Aceptación:** probar preferencias GSettings en Shell y retirar limpiamente; verificar que su descripción no afirma soporte de producción.
 
@@ -64,3 +64,11 @@ Estado: Gate 1 aprobado; scaffolding y primer corte en implementación. Fuente d
 ## Gate 2 — futuro
 
 Después de implementar y revisar, presentar resumen del diff, validaciones y mensaje convencional propuesto. No crear commit hasta confirmación explícita.
+
+## Preparación de publicación — pendiente
+
+- [x] Adoptar nombre de producto `Quota Meter`, UUID `quota-meter@fsmw.github.io` y licencia GPL-2.0-or-later.
+- [x] Eliminar el logo de OpenAI y usar un símbolo genérico de medidor GNOME.
+- [x] Crear/publicar el repositorio `fsmw/quota-meter-gnome` y añadir su URL a `metadata.json`.
+- [ ] Probar instalación, habilitación y deshabilitación en GNOME Shell 50 antes de solicitar revisión en Extensions.gnome.org.
+- [ ] Completar revisión visual/legal y cargar el paquete en Extensions.gnome.org.

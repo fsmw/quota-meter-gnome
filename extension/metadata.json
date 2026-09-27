@@ -1,8 +1,9 @@
 {
-  "uuid": "agnome-top@local",
-  "name": "Agnome Top",
-  "description": "Cuotas de Codex en el panel. Versión personal experimental; Codex App Server no está soportado para producción.",
-  "settings-schema": "org.gnome.shell.extensions.agnome-top",
+  "uuid": "quota-meter@fsmw.github.io",
+  "name": "Quota Meter",
+  "description": "Shows account usage limits for supported AI services in the GNOME panel. Unofficial community project; Codex support requires the locally installed Codex CLI.",
+  "url": "https://github.com/fsmw/quota-meter-gnome",
+  "settings-schema": "org.gnome.shell.extensions.quota-meter",
   "shell-version": [
     "50",
     "51"

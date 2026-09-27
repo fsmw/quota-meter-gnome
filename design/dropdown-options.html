@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quota Meter — propuestas de menú</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page: #17181b;
+      --surface: #232428;
+      --shell: #000;
+      --popover: #303136;
+      --popover-raised: #3b3c42;
+      --line: rgba(255, 255, 255, .1);
+      --text: #f6f5f4;
+      --muted: #b1b0b6;
+      --subtle: #85858c;
+      --blue: #78aeff;
+      --blue-strong: #3584e4;
+      --green: #8ff0a4;
+      --meter: #e5e5e5;
+      --font: Cantarell, "Adwaita Sans", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--text);
+      font: 15px/1.4 var(--font);
+      min-width: 320px;
+    }
+    .page-head {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 34px 34px 22px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .eyebrow {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 5px 0 0; font-size: 27px; letter-spacing: -.025em; }
+    .intro { max-width: 430px; margin: 0; color: var(--muted); }
+    .options {
+      max-width: 1480px;
+      margin: auto;
+      padding: 0 34px 42px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .option { min-width: 0; }
+    .option-head {
+      min-height: 66px;
+      padding: 0 2px 12px;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .letter {
+      width: 24px;
+      height: 24px;
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: #414248;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .option h2 { margin: 0; font-size: 16px; font-weight: 700; }
+    .option-head p { margin: 0 0 0 auto; color: var(--subtle); font-size: 12px; }
+    .desktop {
+      position: relative;
+      height: 465px;
+      overflow: hidden;
+      border: 1px solid #56575d;
+      border-radius: 13px;
+      background:
+        radial-gradient(ellipse at 18% 92%, rgba(202, 153, 139, .62), transparent 39%),
+        radial-gradient(ellipse at 82% 78%, rgba(210, 185, 113, .58), transparent 31%),
+        linear-gradient(137deg, #c9d7e6 0%, #d6cfdb 48%, #b9d1e4 100%);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
+    }
+    .panel {
+      height: 36px;
+      padding: 0 10px;
+      background: var(--shell);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 11px;
+      box-shadow: 0 1px 0 rgba(255,255,255,.06);
+    }
+    .clock { margin: 0 auto; font-size: 14px; font-weight: 700; }
+    .panel-spacer { width: 62px; }
+    .quota-trigger {
+      height: 26px;
+      padding: 0 9px 0 5px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 15px;
+      background: #46474c;
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .logo-disc {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      overflow: hidden;
+      border-radius: 50%;
+      background: #fff;
+    }
+    .quota-glyph { font-size: 15px; line-height: 1; color: #242424; }
+    .status-icons { display: flex; align-items: center; gap: 8px; color: #f5f5f5; }
+    .status-icons svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+    .work-area { position: absolute; inset: 36px 0 0; }
+    .window-hint {
+      position: absolute;
+      left: 24px;
+      bottom: 24px;
+      width: 175px;
+      height: 135px;
+      border: 1px solid rgba(255,255,255,.36);
+      border-radius: 10px;
+      background: linear-gradient(145deg, rgba(255,255,255,.2), rgba(41,47,60,.24));
+      box-shadow: 0 16px 34px rgba(47,53,67,.16);
+    }
+    .popover {
+      position: absolute;
+      z-index: 1;
+      top: 42px;
+      right: 8px;
+      width: min(352px, calc(100% - 16px));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 15px;
+      background: var(--popover);
+      box-shadow: 0 12px 34px rgba(0,0,0,.36), 0 2px 7px rgba(0,0,0,.22);
+      overflow: hidden;
+    }
+    .popover-inner { padding: 17px 18px 14px; }
+    .account-line { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 13px; }
+    .account-line .logo-disc { width: 23px; height: 23px; }
+    .account-line .quota-glyph { font-size: 18px; }
+    .account-name { color: var(--text); font-size: 14px; font-weight: 700; }
+    .plan { margin-left: auto; color: var(--muted); font-size: 12px; }
+    .divider { height: 1px; margin: 15px 0; background: var(--line); }
+    .section-label { margin: 0 0 9px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .metric-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .metric-title { font-size: 14px; font-weight: 700; }
+    .metric-window { color: var(--muted); font-size: 12px; }
+    .big-remaining { font-size: 26px; font-weight: 750; letter-spacing: -.03em; }
+    .big-remaining small { color: var(--muted); font-size: 13px; font-weight: 500; letter-spacing: 0; }
+    .meter {
+      height: 6px;
+      margin: 9px 0 8px;
+      overflow: hidden;
+      border-radius: 99px;
+      background: rgba(255,255,255,.15);
+    }
+    .meter > span { display: block; height: 100%; border-radius: inherit; background: var(--blue); }
+    .metric-foot { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; }
+    .reset { color: var(--subtle); }
+    .secondary-row {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .secondary-row strong { color: var(--text); font-weight: 650; }
+    .secondary-row .right { text-align: right; white-space: nowrap; }
+    .secondary-row .reset-small { display: block; margin-top: 2px; color: var(--subtle); font-size: 11px; }
+    .footer {
+      min-height: 44px;
+      padding: 0 17px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--subtle);
+      font-size: 11px;
+    }
+    .refresh {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 9px;
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    .refresh svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .experimental { margin: 0; color: var(--subtle); font-size: 11px; }
+
+    /* Option A: a single, scannable quota summary. */
+    .option-a .popover { width: min(352px, calc(100% - 16px)); }
+    .option-a .primary { padding-top: 3px; }
+
+    /* Option B: separate quota buckets, with equal visual weight. */
+    .option-b .popover { width: min(366px, calc(100% - 16px)); }
+    .bucket {
+      padding: 11px 12px 10px;
+      border-radius: 11px;
+      background: var(--popover-raised);
+    }
+    .bucket + .bucket { margin-top: 8px; }
+    .bucket .metric-head { align-items: center; }
+    .bucket .meter { margin-top: 8px; }
+    .bucket-label { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; }
+    .window-pill { padding: 2px 7px; border-radius: 99px; background: rgba(255,255,255,.1); color: var(--muted); font-size: 11px; }
+
+    /* Option C: keep the detail list native and make the refresh action quiet. */
+    .option-c .popover { width: min(352px, calc(100% - 16px)); }
+    .list-row { padding: 10px 0; }
+    .list-row + .list-row { border-top: 1px solid var(--line); }
+    .list-row .metric-title { font-size: 13px; }
+    .list-row .big-remaining { font-size: 19px; }
+    .list-row .meter { height: 4px; margin: 7px 0 6px; }
+    .list-row .metric-foot { font-size: 11px; }
+    .action-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .status-ok { display: inline-flex; align-items: center; gap: 6px; color: var(--green); font-size: 11px; }
+    .status-ok::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
+    .button-refresh { border: 0; background: transparent; cursor: default; }
+
+    .principles {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 0 34px 32px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .principles strong { color: var(--text); }
+    @media (max-width: 1050px) {
+      .options { grid-template-columns: 1fr; max-width: 560px; }
+      .page-head { align-items: start; flex-direction: column; }
+      .intro { max-width: 560px; }
+    }
+    @media (max-width: 520px) {
+      .page-head, .options, .principles { padding-left: 16px; padding-right: 16px; }
+      .desktop { height: 445px; }
+      .option-head p { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="page-head">
+    <div>
+      <div class="eyebrow">Quota Meter · maqueta de interacción</div>
+      <h1>Tres propuestas para el menú</h1>
+    </div>
+    <p class="intro">El panel y los datos son iguales en las tres opciones. Cambia solo la jerarquía del menú para que puedas elegir una dirección.</p>
+  </header>
+
+  <main class="options">
+    <section class="option option-a" aria-labelledby="option-a-title">
+      <div class="option-head"><span class="letter">A</span><h2 id="option-a-title">Resumen claro</h2><p>Una cuota principal</p></div>
+      <div class="desktop">
+        <div class="panel">
+          <span class="panel-spacer"></span><span class="clock">7:06 PM</span>
+          <div class="quota-trigger"><span class="logo-disc"><span class="quota-glyph" aria-hidden="true">◴</span></span>26%</div>
+          <div class="status-icons" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 8.5a14 14 0 0 1 18 0M6.5 12a9 9 0 0 1 11 0M10 15.5a3.5 3.5 0 0 1 4 0M12 19h.01"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 14 0v7H5zM9 19v2m6-2v2"/></svg>
+          </div>
+        </div>
+        <div class="work-area"><div class="window-hint"></div></div>
+        <div class="popover">
+          <div class="popover-inner">
+            <div class="account-line"><span class="logo-disc"><span class="quota-glyph" aria-hidden="true">◴</span></span><span class="account-name">Codex</span><span class="plan">ChatGPT Pro</span></div>
+            <div class="divider"></div>
+            <div class="primary">
+              <div class="metric-head"><span class="metric-title">Cuota principal</span><span class="metric-window">7 días</span></div>
+              <div class="big-remaining">26% <small>disponible</small></div>
+              <div class="meter"><span style="width:74%"></span></div>
+              <div class="metric-foot"><span>74% usado</span><span class="reset">Reinicia sáb. 3 oct., 14:10</span></div>
+            </div>
+            <div class="divider"></div>
+            <div class="secondary-row"><span><strong>Base model inference</strong><br>Ventana de 7 días</span><span class="right"><strong>100% libre</strong><span class="reset-small">Reinicia dom. 4 oct.</span></span></div>
+          </div>
+          <div class="footer"><span>Actualizado 7:06 PM · cada 1 min</span><span class="refresh"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M6 9a7 7 0 0 1 12-2l2 5M4 12l2 5a7 7 0 0 0 12-2"/></svg>Actualizar</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="option option-b" aria-labelledby="option-b-title">
+      <div class="option-head"><span class="letter">B</span><h2 id="option-b-title">Límites separados</h2><p>Dos métricas comparables</p></div>
+      <div class="desktop">
+        <div class="panel">
+          <span class="panel-spacer"></span><span class="clock">7:06 PM</span>
+          <div class="quota-trigger"><span class="logo-disc"><span class="quota-glyph" aria-hidden="true">◴</span></span>26%</div>
+          <div class="status-icons" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 8.5a14 14 0 0 1 18 0M6.5 12a9 9 0 0 1 11 0M10 15.5a3.5 3.5 0 0 1 4 0M12 19h.01"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 14 0v7H5zM9 19v2m6-2v2"/></svg>
+          </div>
+        </div>
+        <div class="work-area"><div class="window-hint"></div></div>
+        <div class="popover">
+          <div class="popover-inner">
+            <div class="account-line"><span class="logo-disc"><span class="quota-glyph" aria-hidden="true">◴</span></span><span class="account-name">Codex</span><span class="plan">ChatGPT Pro</span></div>
+            <div class="divider"></div>
+            <p class="section-label">Límites de uso</p>
+            <div class="bucket">
+              <div class="metric-head"><span class="bucket-label">Cuota principal <span class="window-pill">7 días</span></span><strong>26% libre</strong></div>
+              <div class="meter"><span style="width:74%"></span></div>
+              <div class="metric-foot"><span>74% usado</span><span class="reset">Reinicia sáb. 3 oct., 14:10</span></div>
+            </div>
+            <div class="bucket">
+              <div class="metric-head"><span class="bucket-label">Base model inference <span class="window-pill">7 días</span></span><strong>100% libre</strong></div>
+              <div class="meter"><span style="width:0%"></span></div>
+              <div class="metric-foot"><span>0% usado</span><span class="reset">Reinicia dom. 4 oct.</span></div>
+            </div>
+          </div>
+          <div class="footer"><span>Actualizado 7:06 PM</span><span class="refresh"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M6 9a7 7 0 0 1 12-2l2 5M4 12l2 5a7 7 0 0 0 12-2"/></svg>Actualizar</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="option option-c" aria-labelledby="option-c-title">
+      <div class="option-head"><span class="letter">C</span><h2 id="option-c-title">Lista compacta</h2><p>Más ligera y directa</p></div>
+      <div class="desktop">
+        <div class="panel">
+          <span class="panel-spacer"></span><span class="clock">7:06 PM</span>
+          <div class="quota-trigger"><span class="logo-disc"><span class="quota-glyph" aria-hidden="true">◴</span></span>26%</div>
+          <div class="status-icons" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 8.5a14 14 0 0 1 18 0M6.5 12a9 9 0 0 1 11 0M10 15.5a3.5 3.5 0 0 1 4 0M12 19h.01"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 14 0v7H5zM9 19v2m6-2v2"/></svg>
+          </div>
+        </div>
+        <div class="work-area"><div class="window-hint"></div></div>
+        <div class="popover">
+          <div class="popover-inner">
+            <div class="account-line"><span class="logo-disc"><span class="quota-glyph" aria-hidden="true">◴</span></span><span class="account-name">Codex</span><span class="plan">ChatGPT Pro</span></div>
+            <div class="divider"></div>
+            <div class="list-row">
+              <div class="metric-head"><span class="metric-title">Cuota principal</span><span class="big-remaining">26% <small>libre</small></span></div>
+              <div class="meter"><span style="width:74%"></span></div>
+              <div class="metric-foot"><span>7 días · 74% usado</span><span class="reset">Reinicia 3 oct., 14:10</span></div>
+            </div>
+            <div class="list-row">
+              <div class="metric-head"><span class="metric-title">Base model inference</span><span class="big-remaining">100% <small>libre</small></span></div>
+              <div class="meter"><span style="width:0%"></span></div>
+              <div class="metric-foot"><span>7 días · 0% usado</span><span class="reset">Reinicia 4 oct.</span></div>
+            </div>
+            <div class="divider"></div>
+            <div class="action-row"><span class="status-ok">Actualizado hace menos de 1 min</span><span class="refresh button-refresh"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M6 9a7 7 0 0 1 12-2l2 5M4 12l2 5a7 7 0 0 0 12-2"/></svg></span></div>
+          </div>
+          <div class="footer"><p class="experimental">Extensión comunitaria no oficial · Usa Codex CLI instalado localmente</p><span>⚙</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <p class="principles"><strong>Dirección visual:</strong> popover pequeño, contenido agrupado, jerarquía clara y sin botón de cerrar. La cuota oficial se distingue del uso local observado; el aviso de integración comunitaria queda en segundo plano. Basado en las recomendaciones GNOME para popovers: poca complejidad y controles agrupados.</p>
+</body>
+</html>

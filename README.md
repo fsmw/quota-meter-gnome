@@ -1,21 +1,23 @@
-# agnome-top
+# Quota Meter
 
-Proyecto para definir y construir una extensión de GNOME Shell 50+ que muestre en el panel superior el consumo y los límites disponibles de proveedores de IA.
+Quota Meter is an unofficial GNOME Shell extension that displays account usage limits for supported AI services in the top panel. Its source is published at [github.com/fsmw/quota-meter-gnome](https://github.com/fsmw/quota-meter-gnome).
 
-## Repositorios de referencia
+## Current scope
 
-- [`agtop/`](agtop/README.md): detección de sesiones, extracción de uso y consulta de cuotas de Codex, Claude y saldo DeepSeek. Este checkout contiene cambios locales preexistentes; trátalo como referencia y no sobrescribas esos cambios.
-- [`gnome-system-monitor-indicator/`](gnome-system-monitor-indicator/README.md): estructura de una extensión GNOME Shell, indicador de panel, ciclo de actualización/limpieza, preferencias y schema GSettings.
+The first provider is Codex. Quota Meter starts the Codex CLI installed by the user and reads account limits over its local stdio App Server protocol. Authentication remains managed by Codex CLI; the extension does not read its credential files or store access tokens. The indicator shows the remaining percentage, while the menu shows quota windows, reset times and connection status.
 
-La síntesis de alcance, arquitectura, contrato de datos, política operativa y decisiones confirmadas está en [`docs/definition.md`](docs/definition.md). El plan de cortes aprobado está en [`docs/task-list.md`](docs/task-list.md).
+This is an independent community project and is not endorsed by or affiliated with OpenAI. It uses a generic GNOME meter icon. The Codex App Server is a local rich-client interface, not the OpenAI API Platform. Its current protocol separates a stable surface from explicitly experimental methods; the quota read method is not marked as requiring the experimental opt-in. OpenAI does not document this as a general-purpose public REST API for third-party extensions, so the Codex adapter stays isolated and may need updates if the CLI protocol changes.
 
-## Estado
+Claude plan quota and Google/Gemini are outside the first release. OpenAI API usage and costs are separate from ChatGPT/Codex plan allowances.
 
-MVP personal/experimental: la v1 consulta Codex App Server por stdio, muestra el porcentaje restante en el panel y detalla ventanas/reinicio en el menú. El proceso de Codex CLI conserva la autenticación; la extensión no lee sus archivos de credenciales. Claude cuota y Gemini siguen fuera del MVP. App Server es experimental y no está soportado para producción.
+## Reference repositories
 
-## Desarrollo local
+- [`agtop/`](agtop/README.md) is a read-only reference for local session usage. Its existing changes are preserved.
+- [`gnome-system-monitor-indicator/`](gnome-system-monitor-indicator/README.md) is a read-only reference for extension lifecycle, panel indicators, preferences and GSettings.
 
-Requiere GJS/GNOME Shell y Codex CLI instalado. Para validar y empaquetar:
+## Development
+
+Requires GJS, GNOME Shell and an installed, authenticated Codex CLI.
 
 ```sh
 npm test
@@ -23,17 +25,37 @@ npm run check
 npm run pack
 ```
 
-Para instalar el bundle personal:
+The extension bundle is written to `dist/quota-meter@fsmw.github.io.shell-extension.zip`.
+
+To install it in the current user session:
 
 ```sh
-gnome-extensions install --force dist/agnome-top@local.shell-extension.zip
-gnome-extensions enable agnome-top@local
+gnome-extensions install --force dist/quota-meter@fsmw.github.io.shell-extension.zip
+gnome-extensions enable quota-meter@fsmw.github.io
 ```
 
-La sesión debe reconocer el bundle instalado. Si `enable` indica que la extensión no existe, vuelve a iniciar sesión y habilítala desde la aplicación Extensions. Para retirarla:
+To uninstall:
 
 ```sh
-gnome-extensions uninstall agnome-top@local
+gnome-extensions uninstall quota-meter@fsmw.github.io
 ```
 
-El paquete generado queda en `dist/`. La integración con App Server es experimental y no debe considerarse soportada para producción.
+### Nested GNOME Shell
+
+On GNOME 49 and later, use Mutter DevKit to test without closing the host session:
+
+```sh
+npm run dev:nested
+```
+
+In a terminal inside the nested Shell window, enable the extension:
+
+```sh
+gnome-extensions enable quota-meter@fsmw.github.io
+```
+
+The script compiles the schema for the temporary session, links `extension/` into the extension directory and restores any previous installation when the nested window closes.
+
+## License
+
+Quota Meter is licensed under GNU GPL version 2 or, at your option, any later version. See [LICENSE](LICENSE).

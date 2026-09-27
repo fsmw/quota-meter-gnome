@@ -1,4 +1,4 @@
-# Definición inicial de agnome-top
+# Definición de Quota Meter
 
 ## Propósito
 
@@ -38,7 +38,7 @@ La extensión se ejecuta dentro del proceso de GNOME Shell. Por tanto, ninguna l
 
 | Integración | Fuente/credencial que agtop usa o fuente oficial identificada | Datos y semántica | Estado/recomendación |
 |---|---|---|---|
-| **Codex con plan ChatGPT** | Interfaz oficial identificada: `account/rateLimits/read` del Codex App Server, accesible por JSON-RPC sobre stdio (`codex app-server`). No extraer el token de `~/.codex/auth.json` ni llamar directamente a `chatgpt.com/backend-api/wham/usage`. | La respuesta expone buckets de límites, porcentaje usado, duración de ventana y reinicio, tipo de plan y créditos cuando correspondan. | **Obligatorio para v1 personal/experimental.** App Server está marcado experimental y no soportado para producción; aislarlo tras un adaptador y comunicar su limitación. |
+| **Codex con plan ChatGPT** | Interfaz del cliente Codex: `account/rateLimits/read` del App Server, accesible por JSON-RPC sobre stdio (`codex app-server`). No extraer el token de `~/.codex/auth.json` ni llamar directamente a `chatgpt.com/backend-api/wham/usage`. | La respuesta expone buckets de límites, porcentaje usado, duración de ventana y reinicio, tipo de plan y créditos cuando correspondan. | **Obligatorio para v1.** El protocolo actual separa una superficie estable de métodos experimentales; este método no requiere el opt-in experimental. App Server no es una API REST pública general para terceros. Aislar el adaptador y no prometer compatibilidad externa. |
 | **OpenAI API Platform** | API key del usuario/proyecto u organización; no es la misma identidad ni cuota que el plan ChatGPT de Codex. OpenAI documenta límites API por modelo/org/proyecto y los headers de respuestas de inferencia pueden incluir remaining/rate-limit metadata. | RPM/TPM y otros límites de API; no representan el allowance del plan personal de Codex. Una API key tampoco debe asumirse capaz de consultar el uso de Codex del plan ChatGPT. | **Fuera de v1** para mantener el producto Codex claramente delimitado. Evaluar luego como conector distinto `openai-api`. |
 | **Claude Code con plan Claude** | agtop lee credenciales OAuth de Claude Code y llama `api.anthropic.com/api/oauth/usage` ([código](../agtop/index.js#L3207), [consulta](../agtop/index.js#L3325)). Anthropic confirma que Claude y Claude Code comparten límites Pro/Max; no encontré documentado el endpoint OAuth de cuota como API pública. | `five_hour`, `seven_day`, ventanas por modelo, extra usage, plan y reinicios cuando estén disponibles. | **Sin cuota en v1**: no portar el endpoint OAuth de agtop. Sí puede mostrarse uso local observado de sesiones Claude Code. |
 | **Anthropic Console/API** | La API Admin oficial usa una Admin API key y endpoints de informes de uso/costo de organizaciones. | Informa tokens/costos por buckets, workspace, modelo o API key; no equivale a cuota restante de Claude Pro/Max. La Admin key requiere privilegios organizacionales más amplios que un token de uso normal. | **Fuera de v1**: otra identidad, privilegio y métrica. Evaluar como conector separado solo si el usuario lo solicita. |
@@ -55,13 +55,13 @@ La extensión se ejecuta dentro del proceso de GNOME Shell. Por tanto, ninguna l
 | Credencial y ubicación | La autenticación permanece a cargo de Codex CLI/App Server y su sesión local. La extensión no abre ni parsea `~/.codex/auth.json`, no guarda tokens en GSettings y no los pasa como argumentos o entorno. La falta de sesión se refleja como `auth_required`. |
 | Datos/unidades | Para cada bucket preservar `usedPercent` tal como se define en protocolo, `windowDurationMins`, `resetsAt`, `planType` y créditos opcionales. Convertir a porcentaje restante solo como `100 - usedPercent`, únicamente si la respuesta es numérica y está en el rango válido; no inventar un límite absoluto de tokens. |
 | Ventanas y reinicio | La respuesta determina los buckets, duración y epoch de reinicio. No asumir que siempre habrá exactamente una ventana corta y otra semanal. Guardar instante de recepción UTC y derivar la hora local solo para presentación. |
-| Frecuencia y límites | Sondeo base cada 5 min según política global; evitar llamadas concurrentes. No se ha identificado un límite de consulta publicado: no sondear por debajo de 5 min y aplicar caché/backoff local. Revalidar política antes de publicar. |
+| Frecuencia y límites | Sondeo base cada 1 min por decisión del usuario; evitar llamadas concurrentes y aplicar timeout, caché y backoff ante fallos. No se ha identificado un límite de consulta publicado; la frecuencia es configurable y debe revisarse si el App Server documenta límites. |
 | Errores | Distinguir ejecutable ausente, inicio fallido, timeout, cierre inesperado, JSON-RPC/protocolo inválido, error RPC, cuenta no autenticada, rate limit y dato antiguo. Conservar último snapshot correcto como stale dentro del TTL; no registrar stdout/stderr ni cuerpos completos. |
-| Cambios esperables | La superficie está documentada pero experimental; versionar/validar handshake y esquema, tolerar campos opcionales desconocidos, y fallar de forma cerrada ante cambios incompatibles. No cambiar a endpoints privados como fallback. |
+| Cambios esperables | La interfaz pertenece al cliente Codex y puede evolucionar; versionar/validar handshake y esquema, tolerar campos opcionales desconocidos, y fallar de forma cerrada ante cambios incompatibles. No cambiar a endpoints privados como fallback. |
 
 Claude Code v1 solo aporta uso local observado, separado de cuota del plan. No se consulta la cuota OAuth no documentada. Gemini y demás productos Google están explícitamente excluidos. No se prometen cuotas de otros proveedores en el primer lanzamiento.
 
-La documentación consultada incluye [Codex App Server](https://learn.chatgpt.com/docs/app-server) (método `account/rateLimits/read`, transporte stdio y advertencia de madurez), la ayuda de [Codex con plan ChatGPT](https://help.openai.com/en/articles/11369540-using-codex-with-your-chatgpt-plan), Anthropic Console en [Usage Reports](https://docs.anthropic.com/en/api/admin-api/usage-cost/get-messages-usage-report), Gemini CLI en su [guía de uso](https://github.com/google-gemini/gemini-cli/blob/main/docs/get-started/index.md), la restricción OAuth en sus [términos y privacidad](https://github.com/google-gemini/gemini-cli/blob/main/docs/resources/tos-privacy.md) y el aviso de [cambio de productos de consumidor](https://developers.google.com/gemini-code-assist/docs/deprecations/code-assist-individuals). Revisado el 2026-09-27; revalidar antes de cada integración.
+La documentación consultada incluye el [protocolo Codex App Server](https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md) y la definición de [account/rateLimits/read](https://github.com/openai/codex/blob/main/codex-rs/app-server-protocol/src/protocol/common.rs), la ayuda de [Codex con plan ChatGPT](https://help.openai.com/en/articles/11369540-using-codex-with-your-chatgpt-plan), Anthropic Console en [Usage Reports](https://docs.anthropic.com/en/api/admin-api/usage-cost/get-messages-usage-report), Gemini CLI en su [guía de uso](https://github.com/google-gemini/gemini-cli/blob/main/docs/get-started/index.md), la restricción OAuth en sus [términos y privacidad](https://github.com/google-gemini/gemini-cli/blob/main/docs/resources/tos-privacy.md) y el aviso de [cambio de productos de consumidor](https://developers.google.com/gemini-code-assist/docs/deprecations/code-assist-individuals). Revisado el 2026-09-27; revalidar antes de cada integración.
 
 ## Contrato de datos normalizado
 
@@ -109,10 +109,10 @@ Reglas:
 ### Propuesta v1
 
 - Extensión GJS en GNOME Shell. Para cuota Codex, iniciar el proceso oficial `codex app-server` con transporte stdio y hablar JSON-RPC; no inspeccionar su almacenamiento de autenticación ni duplicar su tráfico HTTP. Esta integración queda detrás de un adaptador cancelable para poder contener cambios de protocolo y terminar el subproceso al deshabilitar. Otros conectores podrán usar `Gio.File`/libsoup según su ficha.
-- En v1 Codex está habilitado por defecto y puede desactivarse en Preferencias; antes de activarlo, el usuario debe conocer la dependencia de Codex CLI y el carácter experimental del App Server. La autenticación queda a cargo de la sesión de Codex configurada por el usuario.
+- En v1 Codex está habilitado por defecto y puede desactivarse en Preferencias; antes de activarlo, el usuario debe conocer que es una integración comunitaria no oficial y depende del Codex CLI. La autenticación queda a cargo de la sesión de Codex configurada por el usuario.
 - No leer ni copiar credenciales Codex desde archivos. El proceso oficial App Server utiliza la cuenta ya configurada por Codex. No registrar líneas JSON-RPC completas, mensajes de error que puedan contener datos sensibles, ni tokens o respuestas de autenticación. Preferencias GSettings guardan habilitación, intervalo, cuenta/ruta y formato; nunca secretos.
 - El adaptador Codex no implementa HTTP: inicia `codex app-server` sin shell, con un entorno filtrado mediante lista permitida, y envía JSON-RPC por stdio. El CLI puede usar la sesión local configurada para comunicarse con OpenAI. No habilitar redirecciones ni endpoints propios en la extensión.
-- En el menú indicar producto, fuente, estado y última actualización. Documentar antes de instalación que App Server es experimental y que Codex CLI consulta el servicio del proveedor usando la sesión que el usuario ya configuró.
+- En el menú indicar producto, fuente, estado y última actualización. Documentar que la extensión es no oficial, depende del Codex CLI instalado y que CLI/App Server usa la sesión que el usuario ya configuró.
 - Si una integración requiere privilegio Admin API (Anthropic Console) o contraviene los términos del producto (OAuth Google Code Assist), no la habilitar.
 
 Este diseño no crea un aislamiento de seguridad fuerte entre la extensión y Shell: GJS sigue ejecutándose dentro del proceso privilegiado de la sesión gráfica. Un helper no elimina el riesgo si simplemente recibe el mismo token. Reconsiderar proceso auxiliar solo si el protocolo requiere permisos propios, almacenamiento Secret Service o aislamiento verificable que la extensión no puede ofrecer.
@@ -121,7 +121,7 @@ Este diseño no crea un aislamiento de seguridad fuerte entre la extensión y Sh
 
 | Parámetro | Valor inicial propuesto |
 |---|---|
-| Actualización automática | Cada 5 minutos; inmediatamente al habilitar proveedor/activar extensión |
+| Actualización automática | Cada 1 minuto por defecto; inmediatamente al habilitar proveedor/activar extensión |
 | Actualizar manualmente | Acción en el menú; enfriar a 60 segundos por proveedor |
 | Concurrencia | En paralelo entre proveedores; máximo una solicitud activa por adaptador |
 | Timeout | 8 segundos por solicitud; cancelar todas al deshabilitar |
@@ -139,7 +139,7 @@ Estos valores son punto de partida, no límites del proveedor. Ajustar a cualqui
 - Si los proveedores seleccionados hacen el panel demasiado ancho, opción recomendada: mostrar solo los proveedores favoritos en la barra y el resto en el menú; no rotar valores automáticamente.
 - Menú: tarjeta por producto/cuenta, filas por ventana/dimensión, cantidad usada/restante si se conoce, reinicio y hora de actualización; detalle de uso local separado en una sección titulada “Observado en este equipo”.
 - Estados visibles y distintos: “desactivado”, “credencial no encontrada”, “requiere iniciar sesión”, “no compatible”, “límite de consulta alcanzado”, “sin conexión”, “respuesta inválida” y “dato antiguo”. No mostrar alertas de error cada ciclo.
-- Preferencias: activar/desactivar proveedor, seleccionar perfil, elegir intervalo (5/10/15 min, nunca menos de 1 min), datos visibles y proveedores favoritos del panel. No permitir establecer rutas fuera del home sin aviso explícito.
+- Preferencias: activar/desactivar proveedor, seleccionar perfil, elegir intervalo (1/5/10/15 min), datos visibles y proveedores favoritos del panel. No permitir establecer rutas fuera del home sin aviso explícito.
 
 ## Compatibilidad, instalación y validación
 
@@ -154,7 +154,7 @@ Estos valores son punto de partida, no límites del proveedor. Ajustar a cualqui
 ## Decisiones confirmadas (2026-09-27)
 
 1. **Alcance de datos: opción 1A.** La barra prioriza cuota oficial cuando exista un conector admisible. El menú muestra consumo local de sesiones agtop en un bloque separado y optativo; no se infiere cuota restante desde ese consumo.
-2. **Fuentes Claude/Codex: opción 2B.** Solo se usan interfaces públicas/documentadas. No portar `chatgpt.com/backend-api/wham/usage` ni `api.anthropic.com/api/oauth/usage` basándose únicamente en agtop. Se usará el RPC documentado del Codex App Server para cuota personal, aceptando el estatus experimental para un lanzamiento personal. Claude puede reportar uso local observado, pero no cuota personal.
+2. **Fuentes Claude/Codex: opción 2B.** Solo se usan interfaces públicas/documentadas. No portar `chatgpt.com/backend-api/wham/usage` ni `api.anthropic.com/api/oauth/usage` basándose únicamente en agtop. Se usará el RPC `account/rateLimits/read` del Codex App Server para cuota del plan ChatGPT; el adaptador es no oficial y la compatibilidad externa no está garantizada por una API REST pública. Claude puede reportar uso local observado, pero no cuota personal.
 3. **Google/Gemini: opción 3A.** Gemini queda fuera de v1. No leer OAuth de Gemini CLI/Code Assist ni consultar su backend. La Gemini Developer API y Antigravity quedan como productos futuros separados que requieren nuevo alcance y una interfaz oficial admisible.
 
 Estas decisiones excluyen fuentes privadas aunque hoy funcionen: el criterio de soporte pesa más que replicar todos los datos visibles en las aplicaciones oficiales. Si un proveedor publica una API autorizada de cuotas, se puede añadir su adaptador sin cambiar el contrato normalizado.
@@ -163,22 +163,22 @@ Estas decisiones excluyen fuentes privadas aunque hoy funcionen: el criterio de 
 
 El usuario confirmó que v1 debe seguir el gate A y que **Codex es obligatorio**:
 
-- El primer lanzamiento no se declara completo hasta mostrar cuota oficial de Codex con una fuente pública, documentada y apta para automatización.
-- La interfaz identificada es el método JSON-RPC `account/rateLimits/read` del [Codex App Server](https://learn.chatgpt.com/docs/app-server), que entrega límites por ventanas y metadatos de cuenta/créditos. La misma documentación clasifica App Server como experimental y no soportado para cargas de producción.
+- El primer lanzamiento no se declara completo hasta mostrar cuota oficial de Codex mediante el método documentado `account/rateLimits/read`.
+- La interfaz identificada es el método JSON-RPC `account/rateLimits/read` del [Codex App Server](https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md), que entrega límites por ventanas y metadatos de cuenta/créditos. En la definición actual el método no está detrás del opt-in experimental; App Server sigue siendo una interfaz local del cliente, no una API REST pública general para terceros.
 - El endpoint `chatgpt.com/backend-api/wham/usage` de agtop queda expresamente fuera por la decisión 2B, aunque hoy devuelva los campos requeridos.
-- Se puede implementar el shell, preferencias, contrato tipado y conector Codex mediante el adaptador App Server. Se acepta el gate de madurez para un lanzamiento personal/experimental; no etiquetar ni promocionar esta versión como integración estable o soportada para producción.
+- Se puede implementar el shell, preferencias, contrato tipado y conector Codex mediante el adaptador App Server. Presentar la integración como no oficial, mantenerla aislada y no prometer un contrato externo de compatibilidad.
 - Claude plan quota y Gemini quedan fuera del gate v1. Claude solo se incorpora si aparece una interfaz pública admitida; Gemini sigue excluido por la decisión 3A.
 - No degradar a scraping, automatización UI ni al endpoint privado de agtop si cambia o deja de estar disponible el App Server.
 
 ### Decisión de madurez confirmada
 
-4. **Madurez de v1: opción A.** El primer lanzamiento puede ser personal/experimental, usando Codex App Server stdio. La limitación de soporte debe quedar visible y el adaptador aislado; no describirlo como integración estable para producción.
+4. **Madurez de v1: opción A.** El primer lanzamiento es personal/experimental, usando Codex App Server stdio. La extensión informa que es no oficial, la dependencia queda visible y el adaptador se mantiene aislado.
 
 ## Criterios de salida hacia implementación
 
 - Las decisiones de alcance 1A, fuentes 2B y Google 3A están confirmadas.
 - El conector Codex usa `account/rateLimits/read` vía App Server stdio, con fixtures de protocolo, manejo de ejecutable ausente/no autenticado, errores JSON-RPC y terminación limpia del subproceso.
-- La v1 queda etiquetada como personal/experimental y comunica que App Server no está soportado para producción.
+- La v1 queda etiquetada como no oficial y personal/experimental; comunica la dependencia del Codex CLI y no presenta App Server como una API REST pública de la plataforma.
 - El contrato de datos y los estados de error de Codex se fijan a partir de esa interfaz.
 - UI refleja explícitamente unidad, alcance, semántica de porcentaje y antigüedad.
 - Metadata/UUID, shell-version inicial y empaquetado están fijados.

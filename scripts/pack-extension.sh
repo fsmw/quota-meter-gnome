@@ -6,6 +6,7 @@ staging_dir="$(mktemp -d)"
 trap 'rm -rf "$staging_dir"' EXIT
 
 cp -a "$repo_root/extension/." "$staging_dir/"
+cp "$repo_root/LICENSE" "$staging_dir/LICENSE"
 mkdir -p "$repo_root/dist"
 
 gnome-extensions pack "$staging_dir" \
@@ -14,6 +15,8 @@ gnome-extensions pack "$staging_dir" \
     --extra-source=app-server-client.js \
     --extra-source=gio-transport.js \
     --extra-source=provider.js \
-    --schema "$staging_dir/schemas/org.gnome.shell.extensions.agnome-top.gschema.xml" \
+    --extra-source="$staging_dir/i18n.js" \
+    --extra-source=LICENSE \
+    --schema "$staging_dir/schemas/org.gnome.shell.extensions.quota-meter.gschema.xml" \
     --out-dir="$repo_root/dist" \
     --force
