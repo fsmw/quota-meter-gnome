@@ -1,0 +1,10 @@
+{
+  "name": "agnome-top",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check extension/extension.js && node --check extension/prefs.js && node --check extension/normalizer.js && node --check extension/jsonl.js && node --check extension/app-server-client.js && node --check extension/gio-transport.js && node --check extension/provider.js && gjs -m extension/gio-transport.js",
+    "pack": "bash scripts/pack-extension.sh"
+  }
+}

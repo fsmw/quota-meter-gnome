@@ -1,0 +1,11 @@
+# The reference checkouts are independent repositories and must stay untouched.
+/agtop/
+/gnome-system-monitor-indicator/
+
+# Local build and test artifacts.
+/dist/
+/coverage/
+/node_modules/
+.harnesstrim/
+*.zip
+*.gschema.valid

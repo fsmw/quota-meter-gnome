@@ -1,0 +1,10 @@
+{
+  "uuid": "agnome-top@local",
+  "name": "Agnome Top",
+  "description": "Cuotas de Codex en el panel. Versión personal experimental; Codex App Server no está soportado para producción.",
+  "settings-schema": "org.gnome.shell.extensions.agnome-top",
+  "shell-version": [
+    "50",
+    "51"
+  ]
+}
