@@ -66,6 +66,8 @@ export class GioCodexTransport {
                 return separator > 0 && ENVIRONMENT_ALLOWLIST.has(entry.slice(0, separator));
             });
             launcher.set_environ(environment);
+            // This user-installed CLI is essential to read the account quota through Codex's
+            // own authenticated local protocol; do not replace it with credential or HTTP access.
             this._process = launcher.spawnv(['codex', 'app-server']);
             this._stdin = this._process.get_stdin_pipe();
             this._stdout = this._process.get_stdout_pipe();
