@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check extension/extension.js && node --check extension/prefs.js && node --check extension/normalizer.js && node --check extension/jsonl.js && node --check extension/app-server-client.js && node --check extension/gio-transport.js && node --check extension/provider.js && gjs -m extension/gio-transport.js",
+    "check": "node --check extension/extension.js && node --check extension/prefs.js && node --check extension/normalizer.js && node --check extension/jsonl.js && node --check extension/session-usage-parser.js && node --check extension/session-usage-provider.js && node --check extension/app-server-client.js && node --check extension/gio-transport.js && node --check extension/provider.js && gjs -m extension/gio-transport.js && gjs -m extension/session-usage-provider.js",
     "pack": "bash scripts/pack-extension.sh",
     "dev:nested": "bash scripts/dev-nested-shell.sh"
   }

@@ -15,6 +15,8 @@ gnome-extensions pack "$staging_dir" \
     --extra-source=app-server-client.js \
     --extra-source=gio-transport.js \
     --extra-source=provider.js \
+    --extra-source=session-usage-parser.js \
+    --extra-source=session-usage-provider.js \
     --extra-source="$staging_dir/i18n.js" \
     --extra-source=LICENSE \
     --schema "$staging_dir/schemas/org.gnome.shell.extensions.quota-meter.gschema.xml" \

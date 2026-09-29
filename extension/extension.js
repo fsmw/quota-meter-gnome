@@ -1,4 +1,5 @@
 import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import St from 'gi://St';
@@ -15,6 +16,7 @@ import {
 } from './app-server-client.js';
 import {CodexCliMissingError} from './gio-transport.js';
 import {readCodexRateLimits} from './provider.js';
+import {readCodexObservedUsage} from './session-usage-provider.js';
 import {resolveLanguage, translate} from './i18n.js';
 
 const DEFAULT_REFRESH_SECONDS = 60;
@@ -32,6 +34,9 @@ class RateLimitsIndicator extends PanelMenu.Button {
         this._destroyed = false;
         this._inFlight = null;
         this._lastSnapshot = null;
+        this._usageSnapshot = null;
+        this._usageCache = new Map();
+        this._usageInFlight = null;
         this._lastManualRefreshAt = 0;
         this._timerId = 0;
         this._timeoutId = 0;
@@ -81,6 +86,9 @@ class RateLimitsIndicator extends PanelMenu.Button {
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._secondarySection = new PopupMenu.PopupMenuSection();
         this.menu.addMenuItem(this._secondarySection);
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this._usageSection = new PopupMenu.PopupMenuSection();
+        this.menu.addMenuItem(this._usageSection);
 
         this._footerItem = this._createMenuItem({activate: true});
         const footer = new St.BoxLayout({
@@ -140,8 +148,10 @@ class RateLimitsIndicator extends PanelMenu.Button {
                 } else {
                     this._cancelScheduledRefresh();
                     this._inFlight?.cancel();
+                    this._usageInFlight?.cancel();
                     this._label.text = '—';
                     this._clearMetrics();
+                    this._clearObservedUsage();
                     this._setStatus('Codex disabled in Preferences');
                 }
             }
@@ -161,6 +171,7 @@ class RateLimitsIndicator extends PanelMenu.Button {
                     this._setStatus('Checking Codex…');
                     this._updatedLabel.text = this._t('No recent data');
                 }
+                this._renderObservedUsage(this._usageSnapshot);
             }
         });
 
@@ -226,6 +237,7 @@ class RateLimitsIndicator extends PanelMenu.Button {
 
         const cancellable = new Gio.Cancellable();
         this._inFlight = cancellable;
+        this._refreshObservedUsage();
         let timedOut = false;
         this._setStatus('Checking Codex…');
         this._timeoutId = GLib.timeout_add_seconds(
@@ -315,6 +327,7 @@ class RateLimitsIndicator extends PanelMenu.Button {
 
     _renderSnapshot(snapshot) {
         this._renderMetrics(snapshot.metrics);
+        this._renderObservedUsage(this._usageSnapshot);
         if (snapshot.status !== 'ok' || snapshot.metrics.length === 0) {
             this._label.text = '—';
             this._setStatus('The account did not report quota windows');
@@ -352,6 +365,107 @@ class RateLimitsIndicator extends PanelMenu.Button {
     _clearMetrics() {
         this._primarySection.removeAll();
         this._secondarySection.removeAll();
+    }
+
+    async _refreshObservedUsage() {
+        if (this._usageInFlight || this._destroyed)
+            return;
+        const cancellable = new Gio.Cancellable();
+        this._usageInFlight = cancellable;
+        try {
+            const snapshot = await readCodexObservedUsage(cancellable, this._usageCache);
+            if (!this._destroyed && this._usageInFlight === cancellable
+                && this._settings.get_boolean('codex-enabled')) {
+                this._usageSnapshot = snapshot;
+                this._renderObservedUsage(snapshot);
+            }
+        } catch (error) {
+            if (!cancellable.is_cancelled()) {
+                log(`Quota Meter: local session usage unavailable (${error?.name === 'Error' ? 'read error' : 'I/O error'})`);
+                if (!this._destroyed && this._usageInFlight === cancellable) {
+                    this._usageSnapshot = {status: 'unavailable', sessionCount: 0, sessions: []};
+                    this._renderObservedUsage(this._usageSnapshot);
+                }
+            }
+        } finally {
+            if (this._usageInFlight === cancellable)
+                this._usageInFlight = null;
+        }
+    }
+
+    _renderObservedUsage(snapshot) {
+        this._usageSection.removeAll();
+        if (!this._settings.get_boolean('codex-enabled'))
+            return;
+
+        const heading = this._createMenuItem();
+        heading.add_child(new St.Label({
+            text: this._t('Observed local token use'),
+            style: 'font-weight: 700; font-size: 12px; padding: 5px 2px 2px;',
+        }));
+        this._usageSection.addMenuItem(heading);
+
+        if (!snapshot || snapshot.status === 'unavailable' || !snapshot.latest) {
+            this._usageSection.addMenuItem(this._emptyMetricItem('No readable local Codex sessions'));
+            return;
+        }
+
+        this._usageSection.addMenuItem(this._usageRow(
+            'Most recent session', snapshot.latest.tokens
+        ));
+        const aggregateLabel = snapshot.sessionCount === 1
+            ? 'Combined · most recent session'
+            : 'Combined · {count} most recent sessions';
+        this._usageSection.addMenuItem(this._usageRow(
+            aggregateLabel, snapshot.total, {count: snapshot.sessionCount}
+        ));
+        if (snapshot.status === 'partial')
+            this._usageSection.addMenuItem(this._emptyMetricItem('Some local usage data may be incomplete'));
+    }
+
+    _usageRow(title, tokens, values = {}) {
+        const item = this._createMenuItem();
+        const content = new St.BoxLayout({
+            orientation: Clutter.Orientation.VERTICAL,
+            x_expand: true,
+            style: 'spacing: 2px; padding: 3px 2px;',
+        });
+        const total = tokens.total;
+        content.add_child(new St.Label({
+            text: `${this._t(title, values)} · ${total === undefined ? '—' : this._formatTokens(total)}`,
+            style: 'font-weight: 600; font-size: 11px;',
+        }));
+        const fields = [
+            ['input', 'Input (uncached)'],
+            ['inputTotal', 'Input total'],
+            ['cachedInput', 'Cached input'],
+            ['output', 'Output'],
+            ['reasoningOutput', 'Reasoning output'],
+        ].filter(([key]) => tokens[key] !== undefined);
+        for (const [key, label] of fields) {
+            const dimension = new St.BoxLayout({x_expand: true});
+            dimension.add_child(new St.Label({
+                text: this._t(label),
+                x_expand: true,
+                style: 'color: rgba(255,255,255,0.55); font-size: 10px;',
+            }));
+            dimension.add_child(new St.Label({
+                text: this._formatTokens(tokens[key]),
+                style: 'color: rgba(255,255,255,0.72); font-size: 10px;',
+            }));
+            content.add_child(dimension);
+        }
+        item.add_child(content);
+        return item;
+    }
+
+    _clearObservedUsage() {
+        this._usageSection.removeAll();
+        this._usageSnapshot = null;
+    }
+
+    _formatTokens(value) {
+        return Math.round(value).toLocaleString(this._locale());
     }
 
     _emptyMetricItem(text) {
